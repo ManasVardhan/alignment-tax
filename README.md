@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner.png" alt="Alignment Tax Calculator Banner" width="100%">
+</p>
+
 # Alignment Tax Calculator: Quantifying Capability Tradeoffs in RLHF
 
 A measurement framework for the performance gap between base language models and their RLHF-tuned variants.
