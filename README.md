@@ -1,85 +1,54 @@
-# Alignment Tax Calculator -- Measuring What RLHF Takes Away
+# Alignment Tax Calculator: Quantifying Capability Tradeoffs in RLHF
 
-A live dashboard that quantifies the performance gap between base models and their RLHF-tuned variants. Because alignment is not free.
+A measurement framework for the performance gap between base language models and their RLHF-tuned variants.
 
-## The Hook
+## Motivation
 
-"RLHF makes models more helpful and less capable. I measured exactly how much."
+The standard narrative in model releases presents RLHF as an unqualified improvement: the "instruct" or "chat" version is simply "better aligned." However, the alignment process involves explicit and implicit tradeoffs. Certain capabilities, particularly creative generation, mathematical reasoning, and stylistic flexibility, may degrade during the RLHF pipeline.
 
-## Concept
+This project attempts to make those tradeoffs measurable and comparable across model families.
 
-Every major model release ships with an "RLHF'd" version. The assumption: alignment improves everything. The reality: alignment trades off capabilities.
+## Research Question
 
-This project measures the "alignment tax" across dimensions:
+What is the quantitative cost of alignment? Which capabilities improve, which degrade, and by how much?
 
-1. **Creative writing** -- originality, surprise, stylistic range
-2. **Mathematical reasoning** -- accuracy on olympiad problems, proof generation
-3. **Coding performance** -- LeetCode solve rate, bug detection, refactoring
-4. **Factual recall** -- knowledge-intensive QA, rare facts
-5. **Metacognition** -- willingness to say "I don't know"
-6. **Humor** -- joke quality, wit, comedic timing (yes, really)
-7. **Translation** -- accuracy vs fluency tradeoff
+## Tax Formula
 
-## Stack
+```
+Alignment Tax = (Base_Score - RLHF_Score) / Base_Score * 100
+```
 
-- HuggingFace for model loading
-- EleutherAI LM Evaluation Harness for standardized testing
-- Streamlit for live dashboard
-- SQLite for tracking model versions
+Negative values indicate improvement from RLHF. The overall tax is a weighted average across dimensions.
+
+## Evaluation Dimensions
+
+| Dimension | Measurement | Weight |
+|-----------|-------------|--------|
+| Creativity | Story generation diversity (distinct-n, self-BLEU) | 1.0 |
+| Mathematics | GSM8K, MATH benchmark accuracy | 1.2 |
+| Coding | HumanEval, MBPP solve rate | 1.2 |
+| Knowledge | TriviaQA, Natural Questions accuracy | 1.0 |
+| Calibration | Expected Calibration Error, abstention rate | 0.8 |
+| Humor | Human-rated joke quality | 0.6 |
 
 ## Architecture
 
 ```
 alignment-tax/
-├── evals/               # Custom evaluation suites
-│   ├── creativity.py      # Story generation diversity metrics
-│   ├── math.py            # GSM8K, MATH, proof completion
-│   ├── coding.py          # HumanEval, MBPP, bug detection
-│   ├── knowledge.py       # TriviaQA, Natural Questions
-│   ├── calibration.py     # ECE, willingness to abstain
-│   └── humor.py           # Human-rated joke quality
-├── models/                # Base vs RLHF model pairs
-├── dashboard/             # Streamlit live dashboard
-├── data/                  # Historical scores per model
-└── reports/               # Auto-generated comparison posts
+├── evals/               # Evaluation suites per dimension
+│   ├── creativity.py
+│   ├── math.py
+│   ├── coding.py
+│   ├── knowledge.py
+│   ├── calibration.py
+│   └── humor.py
+├── models/              # Base and RLHF model pairs
+├── dashboard/           # Live comparison interface
+├── data/                # Historical scores
+└── reports/             # Auto-generated comparison outputs
 ```
 
-## The Tax Formula
-
-```
-Alignment Tax = (Base_Score - RLHF_Score) / Base_Score * 100
-
-Example:
-  Base model MATH score: 42%
-  RLHF model MATH score: 31%
-  Tax: (42-31)/42 = 26%
-```
-
-## Dashboard Views
-
-1. **Model Comparison** -- Select any two models, see tax per dimension
-2. **Tax Over Time** -- Track how tax evolves with each RLHF iteration
-3. **Family Tree** -- Visualize base -> SFT -> DPO -> RLHF progression
-4. **Prediction** -- Given a base model score, predict RLHF tax
-5. **Leaderboard** -- Models ranked by "least tax" for each capability
-
-## Models Tracked
-
-- Llama 3 base vs instruct
-- Qwen 2.5 base vs chat
-- Mistral base vs instruct
-- Gemma base vs it
-- DeepSeek base vs chat
-- (Community submissions welcome)
-
-## Viral Mechanics
-
-- Auto-generated "tax report cards" for new model releases
-- "Most Taxed Capability" award each month
-- Community predictions: "Guess the tax before release"
-- X threads comparing specific model pairs with receipts
-
-## Output Example
+## Example Output
 
 ```
 Model: Llama-3-8B-Instruct
@@ -87,20 +56,57 @@ Base:  Llama-3-8B
 
 ALIGNMENT TAX REPORT
 --------------------
-Overall Tax: 18.3%
+Overall Tax: 23.2%
 
 By Capability:
-- Creativity:     -31% (base writes more original stories)
-- Math:           -26% (base solves more olympiad problems)
-- Coding:         -12% (base finds more bugs)
-- Knowledge:      -8%  (base recalls more rare facts)
-- Calibration:    +15% (RLHF better calibrated)
-- Humor:          -22% (base is funnier, sorry)
+  creativity     +30.8%
+  math           +26.2%
+  coding         +13.2%
+  knowledge      + 8.5%
+  calibration    -44.1%  (improved by RLHF)
+  humor          +21.5%
 
-Conclusion: Alignment trades creativity for safety.
-           Worth it? Depends on your use case.
+Most taxed:    creativity (30.8% decrease)
+Least taxed:   knowledge (8.5% decrease)
+
+Improved by RLHF: calibration
+
+Verdict: Moderate tax. Acceptable for general use.
+```
+
+## Models Tracked
+
+- Llama 3 family (base vs instruct)
+- Qwen 2.5 family (base vs chat)
+- Mistral family (base vs instruct)
+- Gemma family (base vs IT)
+- DeepSeek family (base vs chat)
+
+Community submissions of additional model pairs are welcome.
+
+## Dependencies
+
+```
+streamlit
+pandas
+plotly
+```
+
+## Current Status
+
+Calculator operational with synthetic demo data. Real evaluations require API access or local inference.
+
+## Citation
+
+```
+@software{alignment_tax_2026,
+  author = {Vardhan, Manas},
+  title = {Alignment Tax Calculator: Quantifying Capability Tradeoffs in RLHF},
+  year = {2026},
+  url = {https://github.com/ManasVardhan/alignment-tax}
+}
 ```
 
 ## License
 
-MIT -- quantify the tradeoffs honestly.
+MIT
